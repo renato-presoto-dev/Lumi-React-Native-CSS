@@ -1,7 +1,10 @@
 import { View } from "react-native";
+import MyCalendar from "../../components/MyCalendar";
 
 export default function Welcome(){
     return(
-        <View></View>
+        <View>
+            <MyCalendar></MyCalendar>
+        </View>
     );
 }

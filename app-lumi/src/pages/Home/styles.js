@@ -11,7 +11,17 @@ const styles = StyleSheet.create({
     text:{
         
         color:"black"
-    }
+    },
+    calendarWrapper: {
+    margin: 10,
+    borderRadius: 10,
+    overflow: 'hidden', // Para manter as bordas arredondadas no calendário
+    elevation: 4,      // Sombra no Android
+    shadowColor: '#000', // Sombra no iOS
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+  },
 
 });
 
