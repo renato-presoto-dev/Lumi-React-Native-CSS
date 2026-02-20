@@ -2,64 +2,85 @@ import React, { useState } from "react";
 import { View } from "react-native";
 import { Calendar, LocaleConfig } from "react-native-calendars";
 
-// Configuração de Localidade (FORA do componente para evitar erros de renderização)
 LocaleConfig.locales['pt-br'] = {
+
   monthNames: ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'],
+
   monthNamesShort: ['Jan.','Fev.','Mar.','Abr.','Mai.','Jun.','Jul.','Ago.','Set.','Out.','Nov.','Dez.'],
+
   dayNames: ['Domingo','Segunda','Terça','Quarta','Quinta','Sexta','Sábado'],
+
   dayNamesShort: ['Dom.','Seg.','Ter.','Qua.','Qui.','Sex.','Sáb.'],
+
   today: 'Hoje'
+
 };
+
 LocaleConfig.defaultLocale = 'pt-br';
 
 export default function MyCalendar({ onPeriodSelect }) {
-  const [range, setRange] = useState({});
+  const [markedDates, setMarkedDates] = useState({});
+
+  const calculateFertilePeriod = (startDateString) => {
+    const start = new Date(startDateString + 'T00:00:00');
+    let markings = {};
+
+    // 1. Marcar Período Fértil (Janela de 6 dias: do 10º ao 15º dia)
+    // O dia mais fértil (ovulação) será o 14º dia
+    for (let i = 9; i <= 14; i++) {
+      let fertileDay = new Date(start);
+      fertileDay.setDate(start.getDate() + i);
+      const dateStr = fertileDay.toISOString().split('T')[0];
+      
+      markings[dateStr] = {
+        color: '#e1f5fe', // Azul claro para período fértil
+        textColor: '#0288d1',
+        ...(i === 13 && { 
+            marked: true, 
+            dotColor: '#0288d1', 
+            customAbbreviation: 'Dia Mais Fértil' // Metadado para o banco
+        })
+      };
+    }
+    return markings;
+  };
 
   const onDayPress = (day) => {
-    const dateString = day.dateString;
-    const keys = Object.keys(range);
-    let newRange = {};
+    const startDate = day.dateString;
+    const duration = 5; // Duração padrão da menstruação para o cálculo
+    let newMarkings = {};
 
-    // Se não há seleção ou se já existe um período fechado, inicia nova seleção
-    if (keys.length === 0 || (range[keys[0]]?.startingDay && range[keys[keys.length - 1]]?.endingDay)) {
-      newRange = {
-        [dateString]: { startingDay: true, color: '#50cebb', textColor: 'white' }
+    // 2. Marcar Período Menstrual (ex: 5 dias a partir do clique)
+    for (let i = 0; i < duration; i++) {
+      let cycleDay = new Date(startDate + 'T00:00:00');
+      cycleDay.setDate(cycleDay.getDate() + i);
+      const dateStr = cycleDay.toISOString().split('T')[0];
+      
+      newMarkings[dateStr] = {
+        color: '#ffcdd2', // Vermelho claro para menstruação
+        textColor: '#b71c1c',
+        startingDay: i === 0,
+        endingDay: i === duration - 1,
       };
-    } 
-    else {
-      const startDate = keys[0];
-      const endDate = dateString;
-
-      if (endDate < startDate) {
-        // Se clicar em data anterior, reseta o início para a nova data
-        newRange = { [dateString]: { startingDay: true, color: '#50cebb', textColor: 'white' } };
-      } else {
-        // Preenche o intervalo entre início e fim
-        let current = new Date(startDate);
-        const end = new Date(endDate);
-        
-        while (current <= end) {
-          const date = current.toISOString().split('T')[0];
-          newRange[date] = {
-            color: '#70d7c7',
-            textColor: 'white',
-            ...(date === startDate && { startingDay: true }),
-            ...(date === endDate && { endingDay: true }),
-          };
-          current.setDate(current.getDate() + 1);
-        }
-      }
     }
 
-    setRange(newRange);
-    
-    // Comunica ao componente pai os dados selecionados
+    // 3. Adicionar Período Fértil automático
+    const fertileMarkings = calculateFertilePeriod(startDate);
+    const finalMarkings = { ...fertileMarkings, ...newMarkings };
+
+    setMarkedDates(finalMarkings);
+
+    // Enviar dados estruturados para a Home salvar no banco
     if (onPeriodSelect) {
-      const selectedKeys = Object.keys(newRange);
+      const fertileDays = Object.keys(fertileMarkings);
       onPeriodSelect({
-        markedDates: newRange,
-        start: selectedKeys[0],
-        end: selectedKeys[selectedKeys.length - 1]
+        menstrual: { start: startDate, end: Object.keys(newMarkings).pop() },
+        fertile: { 
+            start: fertileDays[0], 
+            end: fertileDays[fertileDays.length - 1],
+            peak: fertileDays[4] // O 14º dia (índice 4 na nossa iteração 9-14)
+        },
+        rawMarkings: finalMarkings
       });
     }
   };
@@ -69,11 +90,10 @@ export default function MyCalendar({ onPeriodSelect }) {
       <Calendar
         markingType={'period'}
         onDayPress={onDayPress}
-        markedDates={range}
+        markedDates={markedDates}
         theme={{
-          todayTextColor: '#50cebb',
-          arrowColor: '#50cebb',
-          selectedDayBackgroundColor: '#50cebb',
+          todayTextColor: '#f06292',
+          arrowColor: '#f06292',
         }}
       />
     </View>
