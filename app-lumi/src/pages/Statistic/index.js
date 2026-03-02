@@ -2,6 +2,8 @@ import { View } from "react-native";
 
 export default function Statistic(){
     return(
-        <View></View>
+        <View>
+            <Text>this is statistic</Text>
+        </View>
     );
 }

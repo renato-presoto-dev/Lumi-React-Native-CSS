@@ -167,7 +167,7 @@ export default function Home() {
           </Text>
         </View>
       </ScrollView>
-      <Navbar activeRoute="Calendario" onNavigate={(route) => console.log(route)} />
+      <Navbar />
     </SafeAreaView>
   );
 }
