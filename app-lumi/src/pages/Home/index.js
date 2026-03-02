@@ -12,6 +12,7 @@ import MyCalendar from '../../components/MyCalendar';
 import { db } from '../../services/firebase';
 import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 import { styles } from './styles';
+import Navbar from '../../components/Navbar';
 
 export default function Home() {
   // Função para pegar a data de hoje formatada como YYYY-MM-DD
@@ -166,6 +167,7 @@ export default function Home() {
           </Text>
         </View>
       </ScrollView>
+      <Navbar activeRoute="Calendario" onNavigate={(route) => console.log(route)} />
     </SafeAreaView>
   );
 }
